@@ -12,3 +12,4 @@
 - Keep companion purchase rules and derived stats in a pure browser-safe module shared by the game and tests, so shop gating and gameplay stay consistent.
 - Companion ownership is run-scoped, and its autonomous deliveries use the same production counters as the player so reports include the whole team's work.
 - Keep factory station layout in a pure shared module so every level uses the same ordered delivery area and tests guard it.
+- Load canvas sprite sheets through CDN asset pointers so binary character art stays outside the repository.
