@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep companion purchase rules and derived stats in a pure browser-safe module shared by the game and tests, so shop gating and gameplay stay consistent.
+- Companion ownership is run-scoped, and its autonomous deliveries use the same production counters as the player so reports include the whole team's work.
