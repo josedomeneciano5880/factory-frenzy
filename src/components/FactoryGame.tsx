@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { buyHelper, freshHelper, helperStats, HELPER_COST, type HelperUpgrade } from "@/lib/helper";
+import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, type HelperUpgrade } from "@/lib/helper";
 
 const W = 960;
 const H = 600;
@@ -263,7 +263,7 @@ export default function FactoryGame() {
               <p className="mt-3 text-sm text-muted-foreground">Bônus de relatório +20. Gaste suas moedas na loja:</p>
               <p className="mt-2 font-display text-lg text-primary">$ {coins}</p>
               <div className="mt-4 grid grid-cols-3 gap-3">
-                {([["speed", "Velocidade", "⚡"], ["cap", "Carregar +1", "📦"], ["range", "Alcance", "🎯"]] as const).map(([k, n, ic]) => {
+                {([["speed", "Pizza", "🍕"], ["cap", "Churrasco", "🥩"], ["range", "Sushi", "🍣"]] as const).map(([k, n, ic]) => {
                   const cost = 15 + up[k] * 15; const max = up[k] >= 3;
                   return (
                     <Button key={k} onClick={() => buy(k)} disabled={max || coins < cost}
@@ -282,9 +282,9 @@ export default function FactoryGame() {
                   </Button>
                 ) : (
                   <div className="mt-2 grid grid-cols-2 gap-3">
-                    {([["speed", "Creatina", "⚡"], ["cap", "Whey", "🥛"]] as const).map(([k, name, icon]) => {
+                    {([["speed", "Creatina", "💪"], ["cap", "Suco", "🧃"]] as const).map(([k, name, icon]) => {
                       const max = helper.up[k] >= 3;
-                      const cost = 15 + helper.up[k] * 15;
+                      const cost = helperUpgradeCost(helper.up[k]);
                       return <Button key={k} variant="secondary" onClick={() => purchaseHelper(k)} disabled={max || coins < cost}
                         aria-label={`Ajudante: ${name}`} className="h-auto min-w-0 flex-col whitespace-normal border-2 border-border p-2 hover:border-primary">
                         <span className="text-xl">{icon}</span><span className="text-xs font-bold">{name}</span>
