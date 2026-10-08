@@ -1,18 +1,12 @@
-# Factory Frenzy
+# Factory Frenzy Explorer
 
-quero ajudar para fazer um jogo
-Proposta: Jogo roguelike: roguelike é um estilo de jogo eletrônico caracterizado por fases geradas aleatoriamente, alta dificuldade e morte permanente, onde o jogador perde todo o progresso e precisa reiniciar a partida do zero ao morrer.
-Sobre Qualidade
-Como funciona: Ele ira ser jogado com o mouse e o teclado, sera um jogo 2d visto de cima. Onde o jogador terá que resolver problemas em uma linha de produção, entre eles descartes, organização e produção de relatório, e a cada nível/fase era ficar mais difícil.
-Fases/Nível 4
-Cenário/personagem: o cenário sera uma fabrica e o personagem sera um estudante do senai.
-Requisitos: Web(html, css e JavaScript)
+https://github.com/josedomeneciano5880/factory-frenzy.git vc consgue modificar alguma coisa desses arquivos?
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/a7e41531-4f2a-562a-802b-8ce32a938d5b).
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/933e7f2b-a493-4134-aff7-9db5bdf466cd).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
