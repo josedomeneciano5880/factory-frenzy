@@ -20,11 +20,11 @@ describe("ajudante", () => {
   });
   it("melhora creatina e suco até nível 3", () => {
     let helper = buyHelper(freshHelper(), 100).helper;
-    for (const upgrade of ["speed", "cap"] as const) {
+    for (const upgrade of ["speed", "cap", "range"] as const) {
       for (let i = 0; i < 3; i++) helper = buyHelper(helper, 1000, upgrade).helper;
       expect(buyHelper(helper, 1000, upgrade).coins).toBe(1000);
     }
-    expect(helperStats(helper)).toEqual({ speed: 315, capacity: 4, reach: 65 });
+    expect(helperStats(helper)).toEqual({ speed: 315, capacity: 4, reach: 170 });
   });
   it("creatina aumenta só a velocidade", () => {
     const hired = buyHelper(freshHelper(), 100).helper;
@@ -36,7 +36,12 @@ describe("ajudante", () => {
     const upgraded = buyHelper(hired, 100, "cap").helper;
     expect(helperStats(upgraded)).toEqual({ speed: 180, capacity: 2, reach: 65 });
   });
+  it("whey aumenta só o alcance", () => {
+    const hired = buyHelper(freshHelper(), 100).helper;
+    const upgraded = buyHelper(hired, 100, "range").helper;
+    expect(helperStats(upgraded)).toEqual({ speed: 180, capacity: 1, reach: 100 });
+  });
   it("reinicia sem ajudante e sem melhorias", () => {
-    expect(freshHelper()).toEqual({ owned: false, up: { speed: 0, cap: 0 } });
+    expect(freshHelper()).toEqual({ owned: false, up: { speed: 0, cap: 0, range: 0 } });
   });
 });

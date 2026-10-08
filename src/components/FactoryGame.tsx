@@ -281,8 +281,8 @@ export default function FactoryGame() {
                     🤝 Contratar ajudante · $ {HELPER_COST}
                   </Button>
                 ) : (
-                  <div className="mt-2 grid grid-cols-2 gap-3">
-                    {([["speed", "Creatina", "💪"], ["cap", "Suco", "🧃"]] as const).map(([k, name, icon]) => {
+                  <div className="mt-2 grid grid-cols-3 gap-3">
+                    {([["speed", "Creatina", "💪"], ["cap", "Suco", "🧃"], ["range", "Whey", "🥛"]] as const).map(([k, name, icon]) => {
                       const max = helper.up[k] >= 3;
                       const cost = helperUpgradeCost(helper.up[k]);
                       return <Button key={k} variant="secondary" onClick={() => purchaseHelper(k)} disabled={max || coins < cost}
