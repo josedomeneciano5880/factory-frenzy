@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, type HelperUpgrade } from "@/lib/helper";
+import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, selectHelperPickups, type HelperUpgrade } from "@/lib/helper";
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 
 const W = 960;
@@ -433,9 +433,8 @@ function updateHelper(s: any, dt: number) {
   const beltEdge = BELT_Y + BELT_H + 22;
   const nearBelt = s.hy <= beltEdge + 30;
   if (s.helperCarry.length < stats.capacity && nearBelt) {
-    const nearby = s.items.filter((it: Item) => it.x > 0 && Math.abs(it.x - s.hx) <= 45);
-    nearby.sort((a: Item, b: Item) => b.x - a.x);
-    for (const item of nearby.slice(0, stats.capacity - s.helperCarry.length)) {
+    const nearby = selectHelperPickups(s.items, s.hx, stats.capacity, s.helperCarry.length, stats.reach);
+    for (const item of nearby) {
       s.helperCarry.push(item); s.items = s.items.filter((it: Item) => it.id !== item.id);
     }
   }

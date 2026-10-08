@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buyHelper, freshHelper, helperStats, helperUpgradeCost } from "./helper";
+import { buyHelper, freshHelper, helperStats, helperUpgradeCost, selectHelperPickups } from "./helper";
 
 describe("ajudante", () => {
   it("desbloqueia melhorias apenas depois de contratar", () => {
@@ -35,6 +35,16 @@ describe("ajudante", () => {
     const hired = buyHelper(freshHelper(), 100).helper;
     const upgraded = buyHelper(hired, 100, "cap").helper;
     expect(helperStats(upgraded)).toEqual({ speed: 180, capacity: 2, reach: 65 });
+  });
+  it("pega todas as peças ao alcance até encher a capacidade do suco", () => {
+    const items = [
+      { id: 1, x: 90 },
+      { id: 2, x: 120 },
+      { id: 3, x: 150 },
+      { id: 4, x: 300 },
+    ];
+    expect(selectHelperPickups(items, 120, 3, 0, 65).map((item) => item.id)).toEqual([2, 1, 3]);
+    expect(selectHelperPickups(items, 120, 3, 2, 65)).toHaveLength(1);
   });
   it("whey aumenta só o alcance", () => {
     const hired = buyHelper(freshHelper(), 100).helper;
