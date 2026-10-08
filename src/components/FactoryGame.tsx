@@ -432,7 +432,7 @@ function updateHelper(s: any, dt: number) {
   // Fill a batch from the belt, then deliver each part to its correct destination.
   const beltEdge = BELT_Y + BELT_H + 22;
   const nearBelt = s.hy <= beltEdge + 30;
-  if (s.helperCarry.length < stats.capacity && nearBelt) {
+  if (s.helperMode !== "deliver" && s.helperCarry.length < stats.capacity && nearBelt) {
     const nearby = selectHelperPickups(s.items, s.hx, stats.capacity, s.helperCarry.length, stats.reach);
     for (const item of nearby) {
       s.helperCarry.push(item); s.items = s.items.filter((it: Item) => it.id !== item.id);
