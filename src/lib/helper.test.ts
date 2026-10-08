@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buyHelper, freshHelper, helperStats, helperUpgradeCost, selectHelperPickups } from "./helper";
+import { buyHelper, freshHelper, helperStats, helperUpgradeCost, selectHelperPickups, nextHelperMode } from "./helper";
 
 describe("ajudante", () => {
   it("desbloqueia melhorias apenas depois de contratar", () => {
@@ -53,5 +53,17 @@ describe("ajudante", () => {
   });
   it("reinicia sem ajudante e sem melhorias", () => {
     expect(freshHelper()).toEqual({ owned: false, up: { speed: 0, cap: 0, range: 0 } });
+  });
+  it("com Suco continua coletando até encher antes de entregar", () => {
+    expect(nextHelperMode("collect", 1, 3, true)).toBe("collect");
+    expect(nextHelperMode("collect", 2, 3, true)).toBe("collect");
+    expect(nextHelperMode("collect", 3, 3, true)).toBe("deliver");
+    expect(nextHelperMode("collect", 1, 3, false, 1)).toBe("collect");
+    expect(nextHelperMode("collect", 1, 3, false, 3)).toBe("deliver");
+  });
+  it("entrega todo o lote antes de voltar para a esteira", () => {
+    expect(nextHelperMode("deliver", 2, 3, true)).toBe("deliver");
+    expect(nextHelperMode("deliver", 1, 3, true)).toBe("deliver");
+    expect(nextHelperMode("deliver", 0, 3, true)).toBe("collect");
   });
 });

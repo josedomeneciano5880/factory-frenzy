@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, selectHelperPickups, type HelperUpgrade } from "@/lib/helper";
+import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, selectHelperPickups, nextHelperMode, type HelperUpgrade } from "@/lib/helper";
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 
 const W = 960;
@@ -60,7 +60,7 @@ export default function FactoryGame() {
     spawnT: 0, lives: 3, done: 0, discarded: 0, organized: 0, missed: 0,
     nextId: 1, toast: "", toastT: 0, level: 0, phase: "menu" as Phase, mx: 0, my: 0,
     coins: 0, up: { speed: 0, cap: 0, range: 0 },
-    helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[],
+    helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
 
@@ -73,7 +73,7 @@ export default function FactoryGame() {
     s.spawnT = 1;
     s.done = 0; s.discarded = 0; s.organized = 0; s.missed = 0;
     if (fresh) { s.lives = 3; s.coins = 0; s.up = { speed: 0, cap: 0, range: 0 }; s.helper = freshHelper(); }
-    s.hx = 750; s.hy = 190; s.helperCarry = [];
+    s.hx = 750; s.hy = 190; s.helperCarry = []; s.helperMode = "collect"; s.helperWait = 0;
     setHelper(s.helper); setCoins(s.coins); setUp({ ...s.up });
     s.px = W / 2; s.py = 190;
     setLevel(lv);
@@ -432,7 +432,7 @@ function updateHelper(s: any, dt: number) {
   // Fill a batch from the belt, then deliver each part to its correct destination.
   const beltEdge = BELT_Y + BELT_H + 22;
   const nearBelt = s.hy <= beltEdge + 30;
-  if (s.helperCarry.length < stats.capacity && nearBelt) {
+  if (s.helperMode !== "deliver" && s.helperCarry.length < stats.capacity && nearBelt) {
     const nearby = selectHelperPickups(s.items, s.hx, stats.capacity, s.helperCarry.length, stats.reach);
     for (const item of nearby) {
       s.helperCarry.push(item); s.items = s.items.filter((it: Item) => it.id !== item.id);
@@ -440,9 +440,19 @@ function updateHelper(s: any, dt: number) {
   }
   const L = LEVELS[s.level];
   const onBelt = s.items.filter((it: Item) => it.x > 0 && it.x < W - 30);
-  const wantMore = s.helperCarry.length < stats.capacity && onBelt.length > 0 ;
+  // Chase the belt part it can reach soonest, predicting belt movement.
+  let target: Item | undefined; let best = Infinity;
+  for (const it of onBelt) {
+    const t = Math.abs(it.x - s.hx) / stats.speed;
+    const fx = it.x + L.speed * t;
+    if (fx > W - 30) continue;
+    const cost = Math.abs(fx - s.hx);
+    if (cost < best) { best = cost; target = it; }
+  }
+  s.helperWait = target || s.helperCarry.length === 0 ? 0 : (s.helperWait || 0) + dt;
+  s.helperMode = nextHelperMode(s.helperMode, s.helperCarry.length, stats.capacity, !!target, s.helperWait);
   const item = s.helperCarry[0];
-  if (item && !wantMore) {
+  if (s.helperMode === "deliver" && item) {
     const station = s.stations.find((st: Station) => item.defect ? st.kind === "bin" : st.kind === "shelf" && st.type === item.type);
     if (!station) { s.helperCarry.shift(); return; }
     const x = station.x + station.w / 2, y = station.y + station.h / 2;
@@ -452,25 +462,11 @@ function updateHelper(s: any, dt: number) {
       if (item.defect) s.discarded++; else s.organized++;
       s.toast = "✔ Ajudante: peça tratada +5"; s.toastT = 1.8;
     }
+  } else if (target) {
+    const t = Math.abs(target.x - s.hx) / stats.speed;
+    move(Math.min(W - 20, target.x + L.speed * t * 0.5), beltEdge);
   } else {
-    // Chase the belt part it can reach soonest (closest ahead of it), predicting belt movement.
-    let target: Item | undefined; let best = Infinity;
-    for (const it of onBelt) {
-      const t = Math.abs(it.x - s.hx) / stats.speed;
-      const fx = it.x + L.speed * t;
-      if (fx > W - 30) continue;
-      const cost = Math.abs(fx - s.hx) + (fx < s.hx ? 0 : 0);
-      if (cost < best) { best = cost; target = it; }
-    }
-    if (target) {
-      const t = Math.abs(target.x - s.hx) / stats.speed;
-      move(Math.min(W - 20, target.x + L.speed * t * 0.5), beltEdge);
-    } else if (item) {
-      // Nothing more to grab right now: deliver what it has.
-      const station = s.stations.find((st: Station) => item.defect ? st.kind === "bin" : st.kind === "shelf" && st.type === item.type);
-      if (station) move(station.x + station.w / 2, station.y + station.h / 2);
-    } else {
-      move(120, beltEdge);
-    }
+    // Wait at the start of the belt for the next part.
+    move(120, beltEdge);
   }
 }

@@ -33,3 +33,13 @@ export function buyHelper(helper: Helper, coins: number, upgrade?: HelperUpgrade
       : { ...helper, owned: true },
   };
 }
+export type HelperMode = "collect" | "deliver";
+/** Once the helper starts delivering it finishes the whole batch before collecting again. */
+/** Seconds a partly loaded helper waits for the next belt part before delivering. */
+export const HELPER_MAX_WAIT = 3;
+export function nextHelperMode(mode: HelperMode, carried: number, capacity: number, hasTarget: boolean, waited = 0): HelperMode {
+  if (carried === 0) return "collect";
+  if (mode === "deliver" || carried >= capacity) return "deliver";
+  if (!hasTarget && waited >= HELPER_MAX_WAIT) return "deliver";
+  return "collect";
+}

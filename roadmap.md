@@ -10,4 +10,4 @@
 - [x] Mostrar claramente o preço do Whey na loja.
 - [x] Alinhar os pontos de entrega na parte inferior, na mesma ordem em todas as fases.
 - [x] Evitar entregas erradas quando o alcance cobre mais de um destino.
-- [x] Fazer o ajudante encher sua capacidade ao coletar peças após comprar Suco.
+- [x] Fazer o ajudante encher sua capacidade ao coletar peças após comprar Suco.- [x] Ajudante enche a carga toda antes de entregar (espera a próxima peça e entrega o lote inteiro)
