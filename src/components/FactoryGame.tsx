@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, type HelperUpgrade } from "@/lib/helper";
+import { buildFactoryLayout, type FactoryStation } from "@/lib/factory-layout";
 
 const W = 960;
 const H = 600;
@@ -10,7 +11,7 @@ const BELT_H = 56;
 const REACH = 95;
 
 type Item = { id: number; x: number; type: number; defect: boolean };
-type Station = { kind: "shelf" | "bin" | "desk"; type?: number; x: number; y: number; w: number; h: number };
+type Station = FactoryStation;
 type Phase = "menu" | "play" | "report" | "levelup" | "over" | "win";
 
 const TYPE_COLORS = ["#3b82f6", "#eab308", "#22c55e", "#f97316"];
@@ -29,17 +30,6 @@ function shuffle<T>(a: T[]) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-function buildLayout(types: number): Station[] {
-  const slots: { x: number; y: number }[] = [];
-  for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) slots.push({ x: 70 + c * 225, y: 240 + r * 180 });
-  shuffle(slots);
-  const st: Station[] = [];
-  for (let t = 0; t < types; t++) st.push({ kind: "shelf", type: t, ...slots.pop()!, w: 120, h: 70 });
-  st.push({ kind: "bin", ...slots.pop()!, w: 90, h: 80 });
-  st.push({ kind: "desk", ...slots.pop()!, w: 120, h: 70 });
-  return st;
 }
 
 export default function FactoryGame() {
@@ -79,7 +69,7 @@ export default function FactoryGame() {
     s.level = lv;
     s.items = [];
     s.carry = [];
-    s.stations = buildLayout(LEVELS[lv].types);
+    s.stations = buildFactoryLayout(LEVELS[lv].types);
     s.spawnT = 1;
     s.done = 0; s.discarded = 0; s.organized = 0; s.missed = 0;
     if (fresh) { s.lives = 3; s.coins = 0; s.up = { speed: 0, cap: 0, range: 0 }; s.helper = freshHelper(); }
@@ -289,7 +279,7 @@ export default function FactoryGame() {
                         aria-label={`Ajudante: ${name}`} className="h-auto min-w-0 flex-col whitespace-normal border-2 border-border p-2 hover:border-primary">
                         <span className="text-xl">{icon}</span><span className="text-xs font-bold">{name}</span>
                         <span className="text-xs text-muted-foreground">Nv {helper.up[k]}/3</span>
-                        <span className="text-primary">{max ? "MÁX" : `$ ${cost}`}</span>
+                        <span className="text-primary">{max ? "MÁX" : `Preço: $ ${cost}`}</span>
                       </Button>;
                     })}
                   </div>

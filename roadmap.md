@@ -7,3 +7,5 @@
 - [x] Testar os novos itens, efeitos e preços da loja.
 - [x] Adicionar Whey como melhoria de alcance do ajudante.
 - [x] Manter Suco como melhoria de carga e testar as três melhorias.
+- [x] Mostrar claramente o preço do Whey na loja.
+- [x] Alinhar os pontos de entrega na parte inferior, na mesma ordem em todas as fases.
