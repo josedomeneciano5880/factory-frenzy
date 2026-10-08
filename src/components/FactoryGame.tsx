@@ -47,23 +47,32 @@ export default function FactoryGame() {
   const [msg, setMsg] = useState("");
   const [report, setReport] = useState<{ q: string; options: number[]; answer: number } | null>(null);
   const [best, setBest] = useState(0);
+  const [coins, setCoins] = useState(0);
+  const [up, setUp] = useState({ speed: 0, cap: 0, range: 0 });
+  const buy = (k: "speed" | "cap" | "range") => {
+    const s = g.current; const cost = 15 + s.up[k] * 15;
+    if (s.coins < cost || s.up[k] >= 3) return;
+    s.coins -= cost; s.up[k]++; setCoins(s.coins); setUp({ ...s.up });
+  };
 
   const g = useRef({
     px: W / 2, py: 200, keys: {} as Record<string, boolean>,
-    items: [] as Item[], carry: null as Item | null, stations: [] as Station[],
+    items: [] as Item[], carry: [] as Item[], stations: [] as Station[],
     spawnT: 0, lives: 3, done: 0, discarded: 0, organized: 0, missed: 0,
     nextId: 1, toast: "", toastT: 0, level: 0, phase: "menu" as Phase, mx: 0, my: 0,
+    coins: 0, up: { speed: 0, cap: 0, range: 0 }, bx: 60, by: 560, stun: 0, bossCd: 0,
   });
 
   const startLevel = (lv: number, fresh: boolean) => {
     const s = g.current;
     s.level = lv;
     s.items = [];
-    s.carry = null;
+    s.carry = [];
     s.stations = buildLayout(LEVELS[lv].types);
     s.spawnT = 1;
     s.done = 0; s.discarded = 0; s.organized = 0; s.missed = 0;
-    if (fresh) s.lives = 3;
+    if (fresh) { s.lives = 3; s.coins = 0; s.up = { speed: 0, cap: 0, range: 0 }; }
+    s.bx = 40; s.by = H - 40; s.stun = 0; s.bossCd = 2;
     s.px = W / 2; s.py = 190;
     setLevel(lv);
     setPhase("play");
@@ -101,7 +110,7 @@ export default function FactoryGame() {
     if (!report) return;
     if (v === report.answer) {
       if (g.current.level >= 3) { setBest(4); setPhase("win"); }
-      else setPhase("levelup");
+      else { g.current.coins += 20; setCoins(g.current.coins); setUp({ ...g.current.up }); setPhase("levelup"); }
     } else {
       setPhase("play");
       loseLife("Relatório com dados errados!");
@@ -112,40 +121,41 @@ export default function FactoryGame() {
   const interact = (tx?: number, ty?: number) => {
     const s = g.current;
     if (s.phase !== "play") return;
-    const near = (x: number, y: number) => Math.hypot(x - s.px, y - s.py) < REACH;
+    const reach = REACH + s.up.range * 35;
+    const cap = 1 + s.up.cap;
+    const near = (x: number, y: number) => Math.hypot(x - s.px, y - s.py) < reach;
     const inside = (st: Station, x: number, y: number) => x >= st.x && x <= st.x + st.w && y >= st.y && y <= st.y + st.h;
     const center = (st: Station) => ({ x: st.x + st.w / 2, y: st.y + st.h / 2 });
 
     // choose target station
     let target: Station | undefined;
     if (tx !== undefined && ty !== undefined) target = s.stations.find((st) => inside(st, tx, ty));
-    else target = s.stations.filter((st) => { const c = center(st); return Math.hypot(c.x - s.px, c.y - s.py) < REACH + 40; })[0];
+    else target = s.stations.filter((st) => { const c = center(st); return Math.hypot(c.x - s.px, c.y - s.py) < reach + 40; })[0];
 
-    if (target && Math.hypot(center(target).x - s.px, center(target).y - s.py) < REACH + 50) {
+    if (target && Math.hypot(center(target).x - s.px, center(target).y - s.py) < reach + 50) {
       if (target.kind === "desk") {
-        if (s.carry) return toast("Largue a peça antes de fazer o relatório");
+        if (s.carry.length) return toast("Largue a peça antes de fazer o relatório");
         if (s.done < LEVELS[s.level].quota) return toast(`Meta: ${s.done}/${LEVELS[s.level].quota} peças tratadas`);
         return openReport();
       }
-      if (!s.carry) return;
-      const it = s.carry;
+      if (!s.carry.length) return;
+      const it = s.carry.shift()!;
       if (target.kind === "bin") {
-        if (it.defect) { s.discarded++; s.done++; toast("✔ Descarte correto"); }
+        if (it.defect) { s.discarded++; s.done++; s.coins += 5; toast("✔ Descarte correto +5"); }
         else loseLife("Descartou uma peça boa!");
       } else {
         if (it.defect) loseLife("Peça defeituosa na prateleira!");
         else if (target.type !== it.type) loseLife("Prateleira errada!");
-        else { s.organized++; s.done++; toast("✔ Organizado"); }
+        else { s.organized++; s.done++; s.coins += 5; toast("✔ Organizado +5"); }
       }
-      s.carry = null;
       return;
     }
     // pick from belt
-    if (s.carry) return;
+    if (s.carry.length >= cap) return toast(`Mãos cheias (${cap})`);
     let cand = s.items.filter((it) => near(it.x, BELT_Y + BELT_H / 2));
     if (tx !== undefined && ty !== undefined) cand = cand.filter((it) => Math.hypot(it.x - tx, BELT_Y + BELT_H / 2 - ty) < 30);
     cand.sort((a, b) => Math.abs(a.x - s.px) - Math.abs(b.x - s.px));
-    if (cand[0]) { s.carry = cand[0]; s.items = s.items.filter((i) => i !== cand[0]); }
+    if (cand[0]) { s.carry.push(cand[0]); s.items = s.items.filter((i) => i !== cand[0]); }
     else if (tx === undefined) toast("Nada ao alcance");
   };
 
@@ -172,7 +182,12 @@ export default function FactoryGame() {
       const s = g.current;
       const L = LEVELS[s.level];
       if (s.phase === "play") {
-        const sp = 230 * dt;
+        const sp = s.stun > 0 ? 0 : 230 * (1 + 0.25 * s.up.speed) * dt;
+        s.stun -= dt; s.bossCd -= dt;
+        const bd = Math.hypot(s.px - s.bx, s.py - s.by);
+        const bs = (60 + s.level * 18) * dt;
+        if (bd > 1 && s.bossCd <= 0) { s.bx += ((s.px - s.bx) / bd) * bs; s.by += ((s.py - s.by) / bd) * bs; }
+        if (bd < 34 && s.bossCd <= 0) { s.stun = 1.3; s.bossCd = 3.5; s.coins = Math.max(0, s.coins - 5); toast("CHEFE: Volta pro trabalho! (-5)"); }
         const k = s.keys;
         if (k["w"] || k["arrowup"]) s.py -= sp;
         if (k["s"] || k["arrowdown"]) s.py += sp;
@@ -233,7 +248,20 @@ export default function FactoryGame() {
             </>)}
             {phase === "levelup" && (<>
               <h2 className="font-display text-3xl text-primary">Fase {level + 1} concluída!</h2>
-              <p className="mt-3 text-sm text-muted-foreground">A esteira vai acelerar e novas peças chegam. O layout da fábrica muda.</p>
+              <p className="mt-3 text-sm text-muted-foreground">Bônus de relatório +20. Gaste suas moedas na loja:</p>
+              <p className="mt-2 font-display text-lg text-primary">$ {coins}</p>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {([["speed", "Velocidade", "⚡"], ["cap", "Carregar +1", "📦"], ["range", "Alcance", "🎯"]] as const).map(([k, n, ic]) => {
+                  const cost = 15 + up[k] * 15; const max = up[k] >= 3;
+                  return (
+                    <button key={k} onClick={() => buy(k)} disabled={max || coins < cost}
+                      className="rounded-md border-2 border-border bg-secondary p-3 text-sm hover:border-primary disabled:opacity-40">
+                      <div className="text-2xl">{ic}</div><div className="font-bold">{n}</div>
+                      <div className="text-xs text-muted-foreground">Nv {up[k]}/3</div>
+                      <div className="mt-1 text-primary">{max ? "MÁX" : `$ ${cost}`}</div>
+                    </button>);
+                })}
+              </div>
               <button onClick={() => startLevel(level + 1, false)} className="mt-6 rounded-md bg-primary px-6 py-3 font-bold text-primary-foreground">Próxima fase</button>
             </>)}
             {phase === "over" && (<>
@@ -310,12 +338,20 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   }
   // player (SENAI student)
   const { px, py } = s;
-  ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.beginPath(); ctx.arc(px, py, REACH, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.beginPath(); ctx.arc(px, py, REACH + s.up.range * 35, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#1d4ed8"; ctx.beginPath(); ctx.arc(px, py, 17, 0, Math.PI * 2); ctx.fill(); // uniform
   ctx.fillStyle = "#f5c99b"; ctx.beginPath(); ctx.arc(px, py - 2, 10, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#facc15"; ctx.beginPath(); ctx.arc(px, py - 5, 11, Math.PI, 0); ctx.fill(); // helmet
   ctx.fillStyle = "#fff"; ctx.font = "bold 8px monospace"; ctx.textAlign = "center"; ctx.fillText("SENAI", px, py + 14);
-  if (s.carry) drawPart(ctx, px + 20, py - 22, s.carry.type, s.carry.defect);
+  s.carry.forEach((c, i) => drawPart(ctx, px + 20 + i * 12, py - 22 - i * 8, c.type, c.defect));
+  if (s.stun > 0) { ctx.fillStyle = "#facc15"; ctx.font = "bold 14px monospace"; ctx.textAlign = "center"; ctx.fillText("★ ★", px, py - 30); }
+  // boss
+  const { bx, by } = s;
+  ctx.fillStyle = "#111827"; ctx.beginPath(); ctx.arc(bx, by, 22, 0, Math.PI * 2); ctx.fill(); // suit
+  ctx.fillStyle = "#dc2626"; ctx.fillRect(bx - 3, by + 4, 6, 14); // tie
+  ctx.fillStyle = "#e0ac7e"; ctx.beginPath(); ctx.arc(bx, by - 4, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fillRect(bx - 18, by + 6, 10, 12); // clipboard
+  ctx.fillStyle = "#fff"; ctx.font = "bold 9px monospace"; ctx.textAlign = "center"; ctx.fillText("CHEFE", bx, by - 20);
   // HUD
   ctx.fillStyle = "rgba(0,0,0,0.75)"; ctx.fillRect(0, 0, W, 54);
   ctx.textAlign = "left"; ctx.font = "bold 18px monospace";
@@ -323,7 +359,8 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   ctx.fillStyle = "#ef4444"; ctx.fillText("♥".repeat(Math.max(0, s.lives)) + "♡".repeat(Math.max(0, 3 - s.lives)), 160, 34);
   ctx.fillStyle = "#e5e7eb"; ctx.fillText(`META ${s.done}/${L.quota}`, 270, 34);
   ctx.font = "13px monospace"; ctx.fillStyle = "#9ca3af";
-  ctx.fillText(s.done >= L.quota ? "Meta batida! Vá ao RELATÓRIO." : "Descarte ✗ · Organize por cor", 430, 34);
+  ctx.fillText(s.done >= L.quota ? "Meta batida! Vá ao RELATÓRIO." : "Fuja do chefe!", 430, 34);
+  ctx.fillStyle = "#facc15"; ctx.font = "bold 18px monospace"; ctx.textAlign = "right"; ctx.fillText(`$ ${s.coins}`, W - 16, 34);
   if (s.toastT > 0) {
     ctx.globalAlpha = Math.min(1, s.toastT);
     ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(W / 2 - 200, H - 60, 400, 36);
