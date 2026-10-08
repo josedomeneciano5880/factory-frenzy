@@ -1,6 +1,7 @@
 export type HelperUpgrade = "speed" | "cap";
 export type Helper = { owned: boolean; up: Record<HelperUpgrade, number> };
 export const HELPER_COST = 40;
+export const helperUpgradeCost = (level: number) => 25 + level * 25;
 export const freshHelper = (): Helper => ({ owned: false, up: { speed: 0, cap: 0 } });
 export const helperStats = (helper: Helper) => ({
   speed: 180 * (1 + helper.up.speed * 0.25),
@@ -8,7 +9,7 @@ export const helperStats = (helper: Helper) => ({
   reach: 65,
 });
 export function buyHelper(helper: Helper, coins: number, upgrade?: HelperUpgrade) {
-  const cost = upgrade ? 15 + helper.up[upgrade] * 15 : HELPER_COST;
+  const cost = upgrade ? helperUpgradeCost(helper.up[upgrade]) : HELPER_COST;
   if (coins < cost || (upgrade ? !helper.owned || helper.up[upgrade] >= 3 : helper.owned)) {
     return { helper, coins };
   }
