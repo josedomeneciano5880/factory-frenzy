@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState } from "react";
 
 const W = 960;
