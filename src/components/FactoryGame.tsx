@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, selectHelperPickups, nextHelperMode, type HelperUpgrade } from "@/lib/helper";
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
+import gabrielAsset from "@/assets/gabriel.png.asset.json";
 
 const W = 960;
 const H = 600;
@@ -61,6 +62,7 @@ export default function FactoryGame() {
     nextId: 1, toast: "", toastT: 0, level: 0, phase: "menu" as Phase, mx: 0, my: 0,
     coins: 0, up: { speed: 0, cap: 0, range: 0 },
     helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
+    playerImage: null as HTMLImageElement | null, facing: "down", moving: false, animT: 0,
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
 
@@ -193,6 +195,9 @@ export default function FactoryGame() {
     if (!ctx) return;
     const css = getComputedStyle(cv);
     g.current.palette = { foreground: css.getPropertyValue("--foreground"), primary: css.getPropertyValue("--primary"), muted: css.getPropertyValue("--muted-foreground"), background: css.getPropertyValue("--background"), accent: css.getPropertyValue("--chart-2") };
+    const playerImage = new Image();
+    playerImage.onload = () => { g.current.playerImage = playerImage; };
+    playerImage.src = gabrielAsset.url;
     let last = performance.now();
     let raf = 0;
     const loop = (now: number) => {
@@ -203,10 +208,16 @@ export default function FactoryGame() {
       if (s.phase === "play") {
         const sp = 230 * (1 + 0.25 * s.up.speed) * dt;
         const k = s.keys;
-        if (k["w"] || k["arrowup"]) s.py -= sp;
-        if (k["s"] || k["arrowdown"]) s.py += sp;
-        if (k["a"] || k["arrowleft"]) s.px -= sp;
-        if (k["d"] || k["arrowright"]) s.px += sp;
+        const dx = (k["d"] || k["arrowright"] ? 1 : 0) - (k["a"] || k["arrowleft"] ? 1 : 0);
+        const dy = (k["s"] || k["arrowdown"] ? 1 : 0) - (k["w"] || k["arrowup"] ? 1 : 0);
+        if (dx) s.px += dx * sp;
+        if (dy) s.py += dy * sp;
+        s.moving = dx !== 0 || dy !== 0;
+        if (s.moving) {
+          s.animT += dt;
+          if (Math.abs(dx) > Math.abs(dy)) s.facing = dx > 0 ? "right" : "left";
+          else if (dy) s.facing = dy > 0 ? "down" : "up";
+        } else s.animT = 0;
         s.px = Math.max(20, Math.min(W - 20, s.px));
         s.py = Math.max(BELT_Y + BELT_H + 22, Math.min(H - 20, s.py));
         s.spawnT -= dt;
@@ -373,13 +384,10 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
       ctx.fillText("RELATÓRIO", st.x + st.w / 2, st.y + st.h + 16);
     }
   }
-  // player (SENAI student)
+  // player (SENAI student sprite)
   const { px, py } = s;
   ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.beginPath(); ctx.arc(px, py, REACH + s.up.range * 35, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#1d4ed8"; ctx.beginPath(); ctx.arc(px, py, 17, 0, Math.PI * 2); ctx.fill(); // uniform
-  ctx.fillStyle = "#f5c99b"; ctx.beginPath(); ctx.arc(px, py - 2, 10, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#facc15"; ctx.beginPath(); ctx.arc(px, py - 5, 11, Math.PI, 0); ctx.fill(); // helmet
-  ctx.fillStyle = "#fff"; ctx.font = "bold 8px monospace"; ctx.textAlign = "center"; ctx.fillText("SENAI", px, py + 14);
+  drawPlayerSprite(ctx, s, px, py);
   s.carry.forEach((c, i) => drawPart(ctx, px + 20 + i * 12, py - 22 - i * 8, c.type, c.defect));
   if (s.helper.owned) {
     ctx.fillStyle = s.palette.accent; ctx.beginPath(); ctx.arc(s.hx, s.hy, 17, 0, Math.PI * 2); ctx.fill();
@@ -404,6 +412,25 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
     ctx.fillText(s.toast, W / 2, H - 37);
     ctx.globalAlpha = 1;
   }
+}
+
+function drawPlayerSprite(ctx: CanvasRenderingContext2D, s: any, x: number, y: number) {
+  const image = s.playerImage as HTMLImageElement | null;
+  if (!image) return;
+  const walkingFrame = Math.floor(s.animT * 8) % 3;
+  let col = 0;
+  let row = 0;
+  let mirror = false;
+  if (s.facing === "up") { col = s.moving ? walkingFrame % 2 : 0; row = 2; }
+  else if (s.facing === "right" || s.facing === "left") {
+    col = s.moving ? walkingFrame : 2; row = s.moving ? 1 : 0; mirror = s.facing === "left";
+  } else col = s.moving ? walkingFrame % 2 : 0;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.translate(x, y);
+  if (mirror) ctx.scale(-1, 1);
+  ctx.drawImage(image, col * 110, row * 110, 110, 110, -31, -38, 62, 62);
+  ctx.restore();
 }
 
 function drawBossFace(ctx: CanvasRenderingContext2D, s: any) {
