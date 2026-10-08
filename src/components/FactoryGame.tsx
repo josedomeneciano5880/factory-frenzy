@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, selectHelperPickups, nextHelperMode, type HelperUpgrade } from "@/lib/helper";
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 import gabrielAsset from "@/assets/gabriel.png.asset.json";
+import andreAsset from "@/assets/andre.png.asset.json";
 
 const W = 960;
 const H = 600;
@@ -63,6 +64,7 @@ export default function FactoryGame() {
     coins: 0, up: { speed: 0, cap: 0, range: 0 },
     helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
     playerImage: null as HTMLImageElement | null, facing: "down", moving: false, animT: 0,
+    helperImage: null as HTMLImageElement | null, helperFacing: "down", helperMoving: false, helperAnimT: 0,
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
 
@@ -76,6 +78,7 @@ export default function FactoryGame() {
     s.done = 0; s.discarded = 0; s.organized = 0; s.missed = 0;
     if (fresh) { s.lives = 3; s.coins = 0; s.up = { speed: 0, cap: 0, range: 0 }; s.helper = freshHelper(); }
     s.hx = 750; s.hy = 190; s.helperCarry = []; s.helperMode = "collect"; s.helperWait = 0;
+    s.helperFacing = "down"; s.helperMoving = false; s.helperAnimT = 0;
     setHelper(s.helper); setCoins(s.coins); setUp({ ...s.up });
     s.px = W / 2; s.py = 190;
     setLevel(lv);
@@ -198,6 +201,9 @@ export default function FactoryGame() {
     const playerImage = new Image();
     playerImage.onload = () => { g.current.playerImage = playerImage; };
     playerImage.src = gabrielAsset.url;
+    const helperImage = new Image();
+    helperImage.onload = () => { g.current.helperImage = helperImage; };
+    helperImage.src = andreAsset.url;
     let last = performance.now();
     let raf = 0;
     const loop = (now: number) => {
@@ -390,10 +396,10 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   drawPlayerSprite(ctx, s, px, py);
   s.carry.forEach((c, i) => drawPart(ctx, px + 20 + i * 12, py - 22 - i * 8, c.type, c.defect));
   if (s.helper.owned) {
-    ctx.fillStyle = s.palette.accent; ctx.beginPath(); ctx.arc(s.hx, s.hy, 17, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = s.palette.foreground; ctx.beginPath(); ctx.arc(s.hx, s.hy - 4, 10, Math.PI, 0); ctx.fill();
+    drawPlayerSprite(ctx, { playerImage: s.helperImage, facing: s.helperFacing, moving: s.helperMoving, animT: s.helperAnimT }, s.hx, s.hy);
+    ctx.fillStyle = s.palette.foreground;
     ctx.font = "bold 10px monospace"; ctx.textAlign = "center";
-    ctx.fillText("AJUDANTE", s.hx, s.hy + 33);
+    ctx.fillText("AJUDANTE", s.hx, s.hy + 46);
     s.helperCarry.forEach((c, i) => drawPart(ctx, s.hx + 20 + i * 12, s.hy - 22 - i * 8, c.type, c.defect));
   }
   // HUD
@@ -449,13 +455,18 @@ function drawBossFace(ctx: CanvasRenderingContext2D, s: any) {
 
 function updateHelper(s: any, dt: number) {
   if (!s.helper.owned) return;
+  s.helperMoving = false;
   const stats = helperStats(s.helper);
   const move = (x: number, y: number) => {
-    const d = Math.hypot(x - s.hx, y - s.hy);
+    const dx = x - s.hx, dy = y - s.hy;
+    const d = Math.hypot(dx, dy);
     if (d > 1) {
+      s.helperMoving = true;
+      s.helperAnimT += dt;
+      s.helperFacing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up");
       const step = Math.min(d, stats.speed * dt);
       s.hx += (x - s.hx) / d * step; s.hy += (y - s.hy) / d * step;
-    }
+    } else s.helperAnimT = 0;
     s.hx = Math.max(20, Math.min(W - 20, s.hx));
     s.hy = Math.max(BELT_Y + BELT_H + 22, Math.min(H - 20, s.hy));
   };

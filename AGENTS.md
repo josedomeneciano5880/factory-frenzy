@@ -13,3 +13,4 @@
 - Companion ownership is run-scoped, and its autonomous deliveries use the same production counters as the player so reports include the whole team's work.
 - Keep factory station layout in a pure shared module so every level uses the same ordered delivery area and tests guard it.
 - Load canvas sprite sheets through CDN asset pointers so binary character art stays outside the repository.
+- Render player and companion with the same directional sprite renderer, using separate image and animation state so each character keeps its own appearance and motion.
