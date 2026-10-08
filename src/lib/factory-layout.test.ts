@@ -15,7 +15,11 @@ describe("organização da fábrica", () => {
       expect(layout.map((station) => station.x)).toEqual([...layout.map((station) => station.x)].sort((a, b) => a - b));
     }
 
-    expect(layouts[0].slice(0, 2)).toEqual(layouts[3].slice(0, 2));
-    expect(layouts[1].slice(0, 3)).toEqual(layouts[3].slice(0, 3));
+    const phase1 = layouts[0];
+    const phase2 = layouts[1];
+    const phase4 = layouts[3];
+    if (!phase1 || !phase2 || !phase4) throw new Error("As quatro fases precisam ter um layout");
+    expect(phase1.slice(0, 2)).toEqual(phase4.slice(0, 2));
+    expect(phase2.slice(0, 3)).toEqual(phase4.slice(0, 3));
   });
 });
