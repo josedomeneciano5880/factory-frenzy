@@ -8,6 +8,19 @@ export const helperStats = (helper: Helper) => ({
   capacity: 1 + helper.up.cap,
   reach: 65 + helper.up.range * 35,
 });
+export function selectHelperPickups<T extends { id: number; x: number }>(
+  items: T[],
+  helperX: number,
+  capacity: number,
+  carried: number,
+  reach: number,
+) {
+  const freeSlots = Math.max(0, capacity - carried);
+  return items
+    .filter((item) => item.x > 0 && Math.abs(item.x - helperX) <= reach)
+    .sort((a, b) => Math.abs(a.x - helperX) - Math.abs(b.x - helperX))
+    .slice(0, freeSlots);
+}
 export function buyHelper(helper: Helper, coins: number, upgrade?: HelperUpgrade) {
   const cost = upgrade ? helperUpgradeCost(helper.up[upgrade]) : HELPER_COST;
   if (coins < cost || (upgrade ? !helper.owned || helper.up[upgrade] >= 3 : helper.owned)) {
