@@ -438,7 +438,7 @@ function updateHelper(s: any, dt: number) {
   }
   const L = LEVELS[s.level];
   const onBelt = s.items.filter((it: Item) => it.x > 0 && it.x < W - 30);
-  const wantMore = s.helperCarry.length < stats.capacity && onBelt.length > 0 && s.helperCarry.length === 0;
+  const wantMore = s.helperCarry.length < stats.capacity && onBelt.length > 0 ;
   const item = s.helperCarry[0];
   if (item && !wantMore) {
     const station = s.stations.find((st: Station) => item.defect ? st.kind === "bin" : st.kind === "shelf" && st.type === item.type);
