@@ -33,3 +33,10 @@ export function buyHelper(helper: Helper, coins: number, upgrade?: HelperUpgrade
       : { ...helper, owned: true },
   };
 }
+export type HelperMode = "collect" | "deliver";
+/** Once the helper starts delivering it finishes the whole batch before collecting again. */
+export function nextHelperMode(mode: HelperMode, carried: number, capacity: number, hasTarget: boolean): HelperMode {
+  if (carried === 0) return "collect";
+  if (mode === "deliver" || carried >= capacity || !hasTarget) return "deliver";
+  return "collect";
+}
