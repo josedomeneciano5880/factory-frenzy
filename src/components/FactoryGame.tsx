@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, type HelperUpgrade } from "@/lib/helper";
-import { buildFactoryLayout, type FactoryStation } from "@/lib/factory-layout";
+import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 
 const W = 960;
 const H = 600;
@@ -129,10 +129,19 @@ export default function FactoryGame() {
     const inside = (st: Station, x: number, y: number) => x >= st.x && x <= st.x + st.w && y >= st.y && y <= st.y + st.h;
     const center = (st: Station) => ({ x: st.x + st.w / 2, y: st.y + st.h / 2 });
 
-    // choose target station
+    // Keyboard interaction automatically favors the correct destination for the first carried part.
     let target: Station | undefined;
     if (tx !== undefined && ty !== undefined) target = s.stations.find((st) => inside(st, tx, ty));
-    else target = s.stations.filter((st) => { const c = center(st); return Math.hypot(c.x - s.px, c.y - s.py) < reach + 40; })[0];
+    else {
+      const reachable = s.stations
+        .filter((st) => { const c = center(st); return Math.hypot(c.x - s.px, c.y - s.py) < reach + 40; })
+        .sort((a, b) => {
+          const ac = center(a); const bc = center(b);
+          return Math.hypot(ac.x - s.px, ac.y - s.py) - Math.hypot(bc.x - s.px, bc.y - s.py);
+        });
+      const carried = s.carry[0];
+      target = carried ? reachable.find((st) => isCorrectDeliveryStation(st, carried)) : reachable.find((st) => st.kind === "desk");
+    }
 
     if (target && Math.hypot(center(target).x - s.px, center(target).y - s.py) < reach + 50) {
       if (target.kind === "desk") {
@@ -141,7 +150,11 @@ export default function FactoryGame() {
         return openReport();
       }
       if (!s.carry.length) return;
-      const it = s.carry.shift()!;
+      const it = s.carry[0];
+      if (!isCorrectDeliveryStation(target, it)) {
+        return toast(it.defect ? "Leve esta peça ao DESCARTE" : `Leve para: ${TYPE_NAMES[it.type]}`);
+      }
+      s.carry.shift();
       if (target.kind === "bin") {
         if (it.defect) { s.discarded++; s.done++; s.coins += 5; toast("✔ Descarte correto +5"); }
         else loseLife("Descartou uma peça boa!");
