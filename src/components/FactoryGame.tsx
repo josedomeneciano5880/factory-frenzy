@@ -73,7 +73,7 @@ export default function FactoryGame() {
     s.spawnT = 1;
     s.done = 0; s.discarded = 0; s.organized = 0; s.missed = 0;
     if (fresh) { s.lives = 3; s.coins = 0; s.up = { speed: 0, cap: 0, range: 0 }; s.helper = freshHelper(); }
-    s.hx = 750; s.hy = 190; s.helperCarry = []; s.helperMode = "collect";
+    s.hx = 750; s.hy = 190; s.helperCarry = []; s.helperMode = "collect"; s.helperWait = 0;
     setHelper(s.helper); setCoins(s.coins); setUp({ ...s.up });
     s.px = W / 2; s.py = 190;
     setLevel(lv);
@@ -449,7 +449,8 @@ function updateHelper(s: any, dt: number) {
     const cost = Math.abs(fx - s.hx);
     if (cost < best) { best = cost; target = it; }
   }
-  s.helperMode = nextHelperMode(s.helperMode, s.helperCarry.length, stats.capacity, !!target);
+  s.helperWait = target || s.helperCarry.length === 0 ? 0 : (s.helperWait || 0) + dt;
+  s.helperMode = nextHelperMode(s.helperMode, s.helperCarry.length, stats.capacity, !!target, s.helperWait);
   const item = s.helperCarry[0];
   if (s.helperMode === "deliver" && item) {
     const station = s.stations.find((st: Station) => item.defect ? st.kind === "bin" : st.kind === "shelf" && st.type === item.type);
@@ -465,6 +466,7 @@ function updateHelper(s: any, dt: number) {
     const t = Math.abs(target.x - s.hx) / stats.speed;
     move(Math.min(W - 20, target.x + L.speed * t * 0.5), beltEdge);
   } else {
+    // Wait at the start of the belt for the next part.
     move(120, beltEdge);
   }
 }
