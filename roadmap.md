@@ -5,3 +5,5 @@
 - [x] Trocar os itens da loja do jogador por pizza, churrasco e sushi.
 - [x] Trocar whey por suco e aumentar os preços das melhorias do ajudante.
 - [x] Testar os novos itens, efeitos e preços da loja.
+- [ ] Adicionar Whey como melhoria de alcance do ajudante.
+- [ ] Manter Suco como melhoria de carga e testar as três melhorias.
