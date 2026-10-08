@@ -25,3 +25,12 @@ export function buildFactoryLayout(types: number): FactoryStation[] {
     { kind: "desk", x: 795, y: 470, w: 120, h: 70 },
   ];
 }
+
+export function isCorrectDeliveryStation(
+  station: FactoryStation,
+  item: { type: number; defect: boolean },
+) {
+  return item.defect
+    ? station.kind === "bin"
+    : station.kind === "shelf" && station.type === item.type;
+}

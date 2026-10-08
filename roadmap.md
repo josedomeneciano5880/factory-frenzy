@@ -9,3 +9,4 @@
 - [x] Manter Suco como melhoria de carga e testar as três melhorias.
 - [x] Mostrar claramente o preço do Whey na loja.
 - [x] Alinhar os pontos de entrega na parte inferior, na mesma ordem em todas as fases.
+- [x] Evitar entregas erradas quando o alcance cobre mais de um destino.
