@@ -416,7 +416,10 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
 
 function drawPlayerSprite(ctx: CanvasRenderingContext2D, s: any, x: number, y: number) {
   const image = s.playerImage as HTMLImageElement | null;
-  if (!image) return;
+  if (!image) {
+    ctx.fillStyle = "#dc2626"; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
   const walkingFrame = Math.floor(s.animT * 8) % 3;
   let col = 0;
   let row = 0;
@@ -429,7 +432,7 @@ function drawPlayerSprite(ctx: CanvasRenderingContext2D, s: any, x: number, y: n
   ctx.imageSmoothingEnabled = false;
   ctx.translate(x, y);
   if (mirror) ctx.scale(-1, 1);
-  ctx.drawImage(image, col * 110, row * 110, 110, 110, -31, -38, 62, 62);
+  ctx.drawImage(image, col * 110, row * 110, 110, 110, -43, -52, 86, 86);
   ctx.restore();
 }
 
