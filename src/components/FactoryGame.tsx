@@ -478,7 +478,7 @@ function drawPlayerSprite(ctx: CanvasRenderingContext2D, s: any, x: number, y: n
 }
 
 function drawBossFace(ctx: CanvasRenderingContext2D, s: any, now: number) {
-  const x = 875, y = 185;
+  const x = 875, y = 228;
   const angry = s.bossAnger > 0 || Math.hypot(s.px - x, s.py - y) < 150;
   const image = (angry ? s.bossAngryImage : s.bossImage) as HTMLImageElement | null;
   if (!image) {
