@@ -5,6 +5,8 @@ import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, se
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 import gabrielAsset from "@/assets/gabriel.png.asset.json";
 import andreAsset from "@/assets/andre.png.asset.json";
+import bossCalmAsset from "@/assets/chefe.png.asset.json";
+import bossAngryAsset from "@/assets/chefebravo.png.asset.json";
 import gearAsset from "@/assets/engrena.png.asset.json";
 import screwAsset from "@/assets/parafuso.png.asset.json";
 import plateAsset from "@/assets/placa.png.asset.json";
@@ -71,6 +73,7 @@ export default function FactoryGame() {
     helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
     playerImage: null as HTMLImageElement | null, facing: "down", moving: false, animT: 0,
     helperImage: null as HTMLImageElement | null, helperFacing: "down", helperMoving: false, helperAnimT: 0,
+    bossImage: null as HTMLImageElement | null, bossAngryImage: null as HTMLImageElement | null, bossAnger: 0, bossT: 0,
     partImages: [] as (HTMLImageElement | undefined)[],
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
@@ -99,6 +102,7 @@ export default function FactoryGame() {
   const loseLife = (why: string) => {
     const s = g.current;
     s.lives--;
+    s.bossAnger = 2.6;
     toast("⚠ " + why);
     if (s.lives <= 0) {
       setBest((b) => Math.max(b, s.level + 1));
@@ -211,6 +215,12 @@ export default function FactoryGame() {
     const helperImage = new Image();
     helperImage.onload = () => { g.current.helperImage = helperImage; };
     helperImage.src = andreAsset.url;
+    const bossImage = new Image();
+    bossImage.onload = () => { g.current.bossImage = bossImage; };
+    bossImage.src = bossCalmAsset.url;
+    const bossAngryImage = new Image();
+    bossAngryImage.onload = () => { g.current.bossAngryImage = bossAngryImage; };
+    bossAngryImage.src = bossAngryAsset.url;
     PART_ASSETS.forEach((asset, type) => {
       const image = new Image();
       image.onload = () => { g.current.partImages[type] = image; };
