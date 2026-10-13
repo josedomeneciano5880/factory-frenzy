@@ -15,3 +15,4 @@
 - [x] Usar o modelo enviado no personagem principal, com animação de movimento.
 - [x] Usar o modelo André enviado no ajudante, mantendo coleta e melhorias.
 - [x] Usar os quatro sprites enviados nas peças, prateleiras e cargas; conferir carregamento das imagens e desenho no jogo.
+- [x] Usar os dois sprites enviados no rosto do chefe (calmo e bravo).
