@@ -14,3 +14,4 @@
 - [x] Ajudante enche a carga toda antes de entregar (espera a próxima peça e entrega o lote inteiro).
 - [x] Usar o modelo enviado no personagem principal, com animação de movimento.
 - [x] Usar o modelo André enviado no ajudante, mantendo coleta e melhorias.
+- [x] Usar os quatro sprites enviados nas peças, prateleiras e cargas; conferir carregamento das imagens e desenho no jogo.
