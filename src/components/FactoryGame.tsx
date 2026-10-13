@@ -73,7 +73,7 @@ export default function FactoryGame() {
     helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
     playerImage: null as HTMLImageElement | null, facing: "down", moving: false, animT: 0,
     helperImage: null as HTMLImageElement | null, helperFacing: "down", helperMoving: false, helperAnimT: 0,
-    bossImage: null as HTMLImageElement | null, bossAngryImage: null as HTMLImageElement | null, bossAnger: 0, bossT: 0,
+    bossImage: null as HTMLImageElement | null, bossAngryImage: null as HTMLImageElement | null, bossAnger: 0,
     partImages: [] as (HTMLImageElement | undefined)[],
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
@@ -259,6 +259,7 @@ export default function FactoryGame() {
         s.items = s.items.filter((i) => i.x <= W + 20);
         for (const it of gone) if (it.defect) loseLife("Peça defeituosa passou para o cliente!");
         if (s.toastT > 0) s.toastT -= dt;
+        if (s.bossAnger > 0) s.bossAnger -= dt;
       }
       draw(ctx, s, now);
       raf = requestAnimationFrame(loop);
@@ -391,7 +392,7 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   ctx.strokeStyle = "#33373e"; ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  drawBossFace(ctx, s);
+  drawBossFace(ctx, s, now);
   // safety stripe
   for (let x = 0; x < W; x += 30) { ctx.fillStyle = (x / 30) % 2 ? "#facc15" : "#111"; ctx.fillRect(x, BELT_Y + BELT_H + 4, 30, 6); }
   // belt
@@ -476,14 +477,27 @@ function drawPlayerSprite(ctx: CanvasRenderingContext2D, s: any, x: number, y: n
   ctx.restore();
 }
 
-function drawBossFace(ctx: CanvasRenderingContext2D, s: any) {
-  ctx.save(); ctx.globalAlpha = 0.45;
+function drawBossFace(ctx: CanvasRenderingContext2D, s: any, now: number) {
   const x = 875, y = 185;
-  ctx.fillStyle = s.palette.muted; ctx.beginPath(); ctx.ellipse(x, y, 28, 31, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = s.palette.background; ctx.beginPath(); ctx.ellipse(x, y - 19, 27, 13, 0, Math.PI, Math.PI * 2); ctx.fill();
-  ctx.fillRect(x - 15, y - 4, 8, 3); ctx.fillRect(x + 7, y - 4, 8, 3);
-  ctx.strokeStyle = s.palette.background; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x - 9, y + 13); ctx.lineTo(x + 9, y + 13); ctx.stroke();
+  const angry = s.bossAnger > 0 || Math.hypot(s.px - x, s.py - y) < 150;
+  const image = (angry ? s.bossAngryImage : s.bossImage) as HTMLImageElement | null;
+  if (!image) {
+    ctx.save(); ctx.globalAlpha = 0.45;
+    ctx.fillStyle = s.palette.muted; ctx.beginPath(); ctx.ellipse(x, y, 28, 31, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = s.palette.background; ctx.beginPath(); ctx.ellipse(x, y - 19, 27, 13, 0, Math.PI, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x - 15, y - 4, 8, 3); ctx.fillRect(x + 7, y - 4, 8, 3);
+    ctx.strokeStyle = s.palette.background; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - 9, y + 13); ctx.lineTo(x + 9, y + 13); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const bob = Math.sin(now / 620) * 3;
+  const shake = angry ? Math.sin(now / 45) * 2 : 0;
+  const size = 150;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = angry ? 0.98 : 0.85;
+  ctx.drawImage(image, 0, 0, image.width, image.height, x - size / 2 + shake, y - size / 2 + bob, size, size);
   ctx.restore();
 }
 
