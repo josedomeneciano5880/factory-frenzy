@@ -5,6 +5,12 @@ import { buyHelper, freshHelper, helperStats, helperUpgradeCost, HELPER_COST, se
 import { buildFactoryLayout, isCorrectDeliveryStation, type FactoryStation } from "@/lib/factory-layout";
 import gabrielAsset from "@/assets/gabriel.png.asset.json";
 import andreAsset from "@/assets/andre.png.asset.json";
+import gearAsset from "@/assets/engrena.png.asset.json";
+import screwAsset from "@/assets/parafuso.png.asset.json";
+import plateAsset from "@/assets/placa.png.asset.json";
+import springAsset from "@/assets/mola.png.asset.json";
+
+const PART_ASSETS = [gearAsset, screwAsset, plateAsset, springAsset];
 
 const W = 960;
 const H = 600;
@@ -65,6 +71,7 @@ export default function FactoryGame() {
     helper: freshHelper(), hx: 750, hy: 190, helperCarry: [] as Item[], helperMode: "collect",
     playerImage: null as HTMLImageElement | null, facing: "down", moving: false, animT: 0,
     helperImage: null as HTMLImageElement | null, helperFacing: "down", helperMoving: false, helperAnimT: 0,
+    partImages: [] as (HTMLImageElement | undefined)[],
     palette: { foreground: "", primary: "", muted: "", background: "", accent: "" },
   });
 
@@ -204,6 +211,11 @@ export default function FactoryGame() {
     const helperImage = new Image();
     helperImage.onload = () => { g.current.helperImage = helperImage; };
     helperImage.src = andreAsset.url;
+    PART_ASSETS.forEach((asset, type) => {
+      const image = new Image();
+      image.onload = () => { g.current.partImages[type] = image; };
+      image.src = asset.url;
+    });
     let last = performance.now();
     let raf = 0;
     const loop = (now: number) => {
@@ -335,7 +347,18 @@ export default function FactoryGame() {
   );
 }
 
-function drawPart(ctx: CanvasRenderingContext2D, x: number, y: number, type: number, defect: boolean) {
+function drawPart(ctx: CanvasRenderingContext2D, x: number, y: number, type: number, defect: boolean, images: (HTMLImageElement | undefined)[]) {
+  const image = images[type];
+  if (image) {
+    const size = 36;
+    const scale = size / Math.max(image.naturalWidth, image.naturalHeight);
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, x - width / 2, y - height / 2, width, height);
+    ctx.restore();
+  } else {
   ctx.fillStyle = TYPE_COLORS[type];
   ctx.strokeStyle = "#111";
   ctx.lineWidth = 2;
@@ -345,6 +368,7 @@ function drawPart(ctx: CanvasRenderingContext2D, x: number, y: number, type: num
   else if (type === 2) ctx.rect(x - 15, y - 11, 30, 22);
   else { ctx.moveTo(x, y - 15); ctx.lineTo(x + 15, y + 12); ctx.lineTo(x - 15, y + 12); ctx.closePath(); }
   ctx.fill(); ctx.stroke();
+  }
   if (defect) {
     ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(x - 9, y - 9); ctx.lineTo(x + 9, y + 9); ctx.moveTo(x + 9, y - 9); ctx.lineTo(x - 9, y + 9); ctx.stroke();
@@ -366,13 +390,13 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   const off = ((now / 1000) * L.speed) % 30;
   ctx.strokeStyle = "#3a3f47"; ctx.lineWidth = 3;
   for (let x = -30 + off; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x, BELT_Y + 4); ctx.lineTo(x, BELT_Y + BELT_H - 4); ctx.stroke(); }
-  for (const it of s.items) drawPart(ctx, it.x, BELT_Y + BELT_H / 2, it.type, it.defect);
+  for (const it of s.items) drawPart(ctx, it.x, BELT_Y + BELT_H / 2, it.type, it.defect, s.partImages);
   // stations
   for (const st of s.stations as Station[]) {
     if (st.kind === "shelf") {
       ctx.fillStyle = "#5b4630"; ctx.fillRect(st.x, st.y, st.w, st.h);
       ctx.fillStyle = TYPE_COLORS[st.type!]; ctx.fillRect(st.x, st.y, st.w, 12);
-      drawPart(ctx, st.x + st.w / 2, st.y + 42, st.type!, false);
+      drawPart(ctx, st.x + st.w / 2, st.y + 42, st.type!, false, s.partImages);
       ctx.fillStyle = "#eee"; ctx.font = "bold 12px monospace"; ctx.textAlign = "center";
       ctx.fillText(TYPE_NAMES[st.type!], st.x + st.w / 2, st.y + st.h + 16);
     } else if (st.kind === "bin") {
@@ -394,13 +418,13 @@ function draw(ctx: CanvasRenderingContext2D, s: any, now: number) {
   const { px, py } = s;
   ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.beginPath(); ctx.arc(px, py, REACH + s.up.range * 35, 0, Math.PI * 2); ctx.fill();
   drawPlayerSprite(ctx, s, px, py);
-  s.carry.forEach((c, i) => drawPart(ctx, px + 20 + i * 12, py - 22 - i * 8, c.type, c.defect));
+  s.carry.forEach((c, i) => drawPart(ctx, px + 20 + i * 12, py - 22 - i * 8, c.type, c.defect, s.partImages));
   if (s.helper.owned) {
     drawPlayerSprite(ctx, { playerImage: s.helperImage, facing: s.helperFacing, moving: s.helperMoving, animT: s.helperAnimT }, s.hx, s.hy);
     ctx.fillStyle = s.palette.foreground;
     ctx.font = "bold 10px monospace"; ctx.textAlign = "center";
     ctx.fillText("AJUDANTE", s.hx, s.hy + 46);
-    s.helperCarry.forEach((c, i) => drawPart(ctx, s.hx + 20 + i * 12, s.hy - 22 - i * 8, c.type, c.defect));
+    s.helperCarry.forEach((c, i) => drawPart(ctx, s.hx + 20 + i * 12, s.hy - 22 - i * 8, c.type, c.defect, s.partImages));
   }
   // HUD
   ctx.fillStyle = "rgba(0,0,0,0.75)"; ctx.fillRect(0, 0, W, 54);

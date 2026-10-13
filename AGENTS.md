@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Load uploaded sprites through Lovable asset pointers and use the same part renderer on the belt, shelves, and carried items so their appearance stays consistent.
